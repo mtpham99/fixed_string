@@ -2,13 +2,15 @@
 
 A c++20 implementation of [proposal 3094: basic_fixed_string](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3094r5.html).
 
+Available as both single header and [c++20 module](https://en.cppreference.com/w/cpp/language/modules).
+
 
 # Example
 
 See [tests](/test/fixed_string_test.cpp) for more examples.
 
 ```cpp
-#include <mtp/fixed_string.hpp>
+import mtp.fixed_string;
 using mtp::fixed_string;
 
 // Allows passing string literals as non-type template parameteres (NTTPs)
@@ -32,6 +34,13 @@ auto main() -> int {
 
 Drop [fixed_string.hpp](/include/mtp/fixed_string.hpp) directly in your project where your compiler can find it.
 
+Exceptions can be disabled using a macro prior to including the header:
+
+```cpp
+#define MTP_NO_EXCEPTIONS
+#include <mtp/fixed_string.hpp>
+```
+
 
 ## CMake
 
@@ -42,28 +51,27 @@ add_subdirectory(PATH_TO_THIS_DIR)
 target_link_libraries(MY_TARGET mtp::fixed_string)
 ```
 
+Then include/import as usual:
+
+```cpp
+#include <mtp/fixed_string.hpp> // header-only
+import mtp.fixed_string;        // module
+```
+
 Optional build options:
 
 1. `MTP_BUILD_TEST`: build tests (default: on if this is the top level project)
 2. `MTP_NO_EXCEPTIONS`: disable exceptions (default: off)
+3. `MTP_BUILD_MODULE`: build as module instead of header-only (default: off)
+4. `MTP_USE_STD_MODULE`: use [c++23 std module](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2465r3.pdf) (default: off)
 
-
-# Test
-
-Tests are implmented using [Catch2 (2.x)](https://github.com/catchorg/Catch2/tree/v2.13.10). Easiest way to build them is using the provided `CMakeLists.txt`. Catch2 is automatically downloaded if not found by CMake.
-
-Tests are enabled via the `MTP_BUILD_TEST` option (on by default if building from this directory).
+Example module build (requires CMake 3.30+, Ninja 1.11+, Clang/Libc++ 18.1.2+):
 
 ```sh
-cmake -S PATH_TO_THIS_DIR -B OUTPUT_BUILD_DIR -DCMAKE_CXX_FLAGS="-std=c++2a" -DMTP_BUILD_TEST=ON
-cmake --build OUTPUT_BUILD_DIR
-ctest --test-dir OUTPUT_BUILD_DIR/test -j$(nproc)
+cmake -S . -B build -G Ninja -DCMAKE_CXX_FLAGS="-std=c++2b -stdlib=libc++" -DMTP_BUILD_TEST=ON -DMTP_BUILD_MODULE=ON -DMTP_USE_STD_MODULE=ON
+cmake --build build -j$(nproc)
+ctest --test-dir build/test -j$(nproc)
 ```
-
-Has been tested using:
-
-1. GCC (11.5, 14.2) w/ c++20, c++23
-2. Clang w/ libc++ (14.0, 19.1) w/ c++20, c++23
 
 
 # Links
