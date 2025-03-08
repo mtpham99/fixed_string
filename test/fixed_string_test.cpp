@@ -8,25 +8,35 @@
 #  define ALL_CHAR_TYPES char, wchar_t, char16_t, char32_t
 #endif
 
-#ifdef __cpp_lib_format
-#  include <format>
-#endif
-#if defined(__cpp_lib_containers_ranges) || defined(__cpp_lib_ranges_to_container)
-#  include <ranges>
+#ifdef MTP_USE_STD_MODULE
+import std;
+#else
+#  include <algorithm>
+#  include <array>
+#  include <cstddef>
+#  ifdef __cpp_lib_format
+#    include <format>
+#  endif
+#  include <functional>
+#  if defined(__cpp_lib_containers_ranges) || defined(__cpp_lib_ranges_to_container)
+#    include <ranges>
+#  endif
+#  include <sstream>
+#  if !defined(MTP_NO_EXCEPTIONS) && defined(__EXCEPTIONS)
+#    include <stdexcept>
+#  endif
+#  include <string_view>
+#  include <utility>
 #endif
 
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <functional>
-#include <sstream>
-#if !defined(MTP_NO_EXCEPTIONS) && defined(__EXCEPTIONS)
-#  include <stdexcept>
+#ifdef MTP_BUILD_MODULE
+import mtp.fixed_string;
+#else
+#  include <mtp/fixed_string.hpp>
 #endif
-#include <string_view>
-#include <utility>
 
-#include <mtp/fixed_string.hpp>
+namespace {
+
 using mtp::basic_fixed_string;
 using mtp::fixed_string;
 
@@ -49,6 +59,8 @@ make_array_from_cstr(CharT const (&c_str)[N]) -> std::array<CharT, N - 1>
     return std::array{ c_str[Is]... };
   }(std::make_index_sequence<N - 1>{});
 }
+
+} // namespace
 
 TEMPLATE_TEST_CASE("constructors", "[fixed_string]", ALL_CHAR_TYPES)
 {
@@ -409,11 +421,11 @@ TEST_CASE("stream output", "[fixed_string]")
 #ifdef __cpp_lib_format
 TEST_CASE("format", "[fixed_string]")
 {
-#if __cpp_deduction_guides >= 201907L && (!defined(__GNUC__) || (__GNUC__ >= 13))
+#  if __cpp_deduction_guides >= 201907L && (!defined(__GNUC__) || (__GNUC__ >= 13))
   auto const fs = fixed_string{ "Hello, World!\n" };
-#else
+#  else
   auto const fs = fixed_string<14>{ "Hello, World!\n" };
-#endif
+#  endif
   CHECK(std::format("{}", fs) == "Hello, World!\n");
 }
 #endif

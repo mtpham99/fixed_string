@@ -1,6 +1,18 @@
 #ifndef MTP_FIXED_STRING_HPP
 #define MTP_FIXED_STRING_HPP
 
+// -------------------------------------------------------------------------------------------------
+
+#if __cplusplus <= 201703L
+#  error "Requires c++20 or later."
+#endif
+
+// -------------------------------------------------------------------------------------------------
+
+#ifndef MTP_EXPORT
+#  define MTP_EXPORT
+#endif
+
 #ifndef MTP_EXPECTS
 #  if defined(_MSC_VER) && !defined(__clang__)
 #    define MTP_EXPECTS(cond) __assume(cond)
@@ -12,7 +24,6 @@
 #endif
 
 #if !defined(MTP_NO_EXCEPTIONS) && defined(__EXCEPTIONS)
-#  include <stdexcept>
 #  define MTP_THROW(except) throw except
 #else
 #  define MTP_THROW(except)
@@ -24,25 +35,33 @@
 #  define MTP_UNLIKELY
 #endif
 
+// -------------------------------------------------------------------------------------------------
+
 #include <version>
 
-#if defined(__cpp_lib_three_way_comparison) && defined(__cpp_impl_three_way_comparison)
-#  include <compare>
-#endif
-#ifdef __cpp_lib_format
-#  include <format>
-#endif
-#if defined(__cpp_lib_containers_ranges) || defined(__cpp_lib_ranges_to_container)
-#  include <ranges>
+#ifndef MTP_BUILD_MODULE
+#  include <algorithm>
+#  if defined(__cpp_lib_three_way_comparison) && defined(__cpp_impl_three_way_comparison)
+#    include <compare>
+#  endif
+#  include <concepts>
+#  include <cstddef>
+#  ifdef __cpp_lib_format
+#    include <format>
+#  endif
+#  include <functional>
+#  include <iterator>
+#  if defined(__cpp_lib_containers_ranges) || defined(__cpp_lib_ranges_to_container)
+#    include <ranges>
+#  endif
+#  if !defined(MTP_NO_EXCEPTIONS) && defined(__EXCEPTIONS)
+#    include <stdexcept>
+#  endif
+#  include <string_view>
+#  include <type_traits>
 #endif
 
-#include <algorithm>
-#include <concepts>
-#include <cstddef>
-#include <functional>
-#include <iterator>
-#include <string_view>
-#include <type_traits>
+// -------------------------------------------------------------------------------------------------
 
 namespace mtp {
 
@@ -50,24 +69,24 @@ namespace mtp {
 // typedefs
 // -------------------------------------------------------------------------------------------------
 
-template <typename CharT, std::size_t N>
+MTP_EXPORT template <typename CharT, std::size_t N>
 struct basic_fixed_string;
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 using fixed_string = basic_fixed_string<char, N>;
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 using fixed_wstring = basic_fixed_string<wchar_t, N>;
 
 #ifdef __cpp_char8_t
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 using fixed_u8string = basic_fixed_string<char8_t, N>;
 #endif
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 using fixed_u16string = basic_fixed_string<char16_t, N>;
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 using fixed_u32string = basic_fixed_string<char32_t, N>;
 
 template <typename CharT, std::size_t N>
@@ -278,6 +297,12 @@ struct basic_fixed_string
     std::swap_ranges(_data, _data + size(), fs._data);
   }
 
+  friend constexpr auto
+  swap(basic_fixed_string& a, basic_fixed_string& b) noexcept -> void
+  {
+    return a.swap(b);
+  }
+
   // -----------------------------------------------------------------------------------------------
   // string operators
   // -----------------------------------------------------------------------------------------------
@@ -407,7 +432,7 @@ struct basic_fixed_string
   {
     return os << fs.view();
   }
-};
+}; // basic_fixed_string
 
 // -------------------------------------------------------------------------------------------------
 // concepts
@@ -444,42 +469,31 @@ template <concepts::char_type CharT, std::size_t N>
 basic_fixed_string(std::from_range_t, std::array<CharT, N>) -> basic_fixed_string<CharT, N>;
 #endif
 
-// -------------------------------------------------------------------------------------------------
-// non-member functions
-// -------------------------------------------------------------------------------------------------
-
-template <typename CharT, std::size_t N>
-constexpr auto
-swap(basic_fixed_string<CharT, N>& a, basic_fixed_string<CharT, N>& b) noexcept -> void
-{
-  return a.swap(b);
-}
-
 } // namespace mtp
 
 // -------------------------------------------------------------------------------------------------
 // hashing support
 // -------------------------------------------------------------------------------------------------
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 struct std::hash<mtp::fixed_string<N>> : std::hash<std::string_view>
 {};
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 struct std::hash<mtp::fixed_wstring<N>> : std::hash<std::wstring_view>
 {};
 
 #ifdef __cpp_char8_t
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 struct std::hash<mtp::fixed_u8string<N>> : std::hash<std::u8string_view>
 {};
 #endif
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 struct std::hash<mtp::fixed_u16string<N>> : std::hash<std::u16string_view>
 {};
 
-template <std::size_t N>
+MTP_EXPORT template <std::size_t N>
 struct std::hash<mtp::fixed_u32string<N>> : std::hash<std::u32string_view>
 {};
 
@@ -488,7 +502,7 @@ struct std::hash<mtp::fixed_u32string<N>> : std::hash<std::u32string_view>
 // -------------------------------------------------------------------------------------------------
 
 #ifdef __cpp_lib_format
-template <typename CharT, std::size_t N>
+MTP_EXPORT template <typename CharT, std::size_t N>
 struct std::formatter<mtp::basic_fixed_string<CharT, N>> : formatter<std::basic_string_view<CharT>>
 {
   template <typename FmtCtx>
@@ -500,5 +514,14 @@ struct std::formatter<mtp::basic_fixed_string<CharT, N>> : formatter<std::basic_
   }
 };
 #endif
+
+// -------------------------------------------------------------------------------------------------
+
+#undef MTP_EXPORT
+#undef MTP_EXPECTS
+#undef MTP_THROW
+#undef MTP_UNLIKELY
+
+// -------------------------------------------------------------------------------------------------
 
 #endif // MTP_FIXED_STRING_HPP
